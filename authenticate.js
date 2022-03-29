@@ -38,3 +38,28 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
     }));
 
 exports.verifyUser = passport.authenticate('jwt', {session: false});
+
+exports.verifyAdmin = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, config.secretKey, (err, test) => {
+            //console.log(test._id)
+            if(err){
+                return next(err);
+            }
+            else {    
+                User.findOne({_id: test._id}, (err, user) => {
+                    if (user.admin == true) {
+                        return next();
+                    }
+                    else {
+                        res.statusCode = 403;
+                        err = new Error("You are not authorized!!");
+                        return next(err);
+                    }
+                });
+            }
+        });
+    }
+}
